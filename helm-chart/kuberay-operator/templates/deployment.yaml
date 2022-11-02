@@ -34,7 +34,7 @@ spec:
           command:
             - /manager
           args:
-           - --watch-namespace"
+           - --watch-namespace
            - {{ .Values.watchNamespace }}
           ports:
             - name: http

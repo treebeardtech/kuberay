@@ -1,7 +1,7 @@
 # permissions for end users to view rayservices.
 {{- if .Values.rbacEnable }}
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: rayservice-viewer-role
 rules:

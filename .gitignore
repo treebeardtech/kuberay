@@ -44,3 +44,5 @@
 **/vendor/
 
 .ipynb_checkpoints
+
+*tgz

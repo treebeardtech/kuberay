@@ -109,7 +109,8 @@ func DefaultHeadPodTemplate(instance rayiov1alpha1.RayCluster, headSpec rayiov1a
 	if instance.Spec.EnableInTreeAutoscaling != nil && *instance.Spec.EnableInTreeAutoscaling {
 		headSpec.RayStartParams["no-monitor"] = "true"
 		// set custom service account with proper roles bound.
-		podTemplate.Spec.ServiceAccountName = utils.GetHeadGroupServiceAccountName(&instance)
+		// utils.CheckName clips the name to match the behavior of reconcileAutoscalerServiceAccount
+		podTemplate.Spec.ServiceAccountName = utils.CheckName(utils.GetHeadGroupServiceAccountName(&instance))
 
 		rayContainerIndex := getRayContainerIndex(podTemplate.Spec)
 		rayHeadImage := podTemplate.Spec.Containers[rayContainerIndex].Image
@@ -709,8 +710,10 @@ func convertParamMap(rayStartParams map[string]string) (s string) {
 // Used for a /dev/shm memory mount for object store and for a /tmp/ray disk mount for autoscaler logs.
 func addEmptyDir(container *v1.Container, pod *v1.Pod, volumeName string, volumeMountPath string, storageMedium v1.StorageMedium) {
 	if checkIfVolumeMounted(container, pod, volumeMountPath) {
+		log.Info("volume already mounted", "volume", volumeName, "path", volumeMountPath)
 		return
 	}
+
 	// 1) If needed, create a Volume of type emptyDir and add it to Volumes.
 	if !checkIfVolumeExists(pod, volumeName) {
 		emptyDirVolume := makeEmptyDirVolume(container, volumeName, storageMedium)
@@ -754,12 +757,7 @@ func makeEmptyDirVolume(container *v1.Container, volumeName string, storageMediu
 func checkIfVolumeMounted(container *v1.Container, pod *v1.Pod, volumeMountPath string) bool {
 	for _, mountedVol := range container.VolumeMounts {
 		if mountedVol.MountPath == volumeMountPath {
-			for _, podVolume := range pod.Spec.Volumes {
-				if mountedVol.Name == podVolume.Name {
-					// already mounted, nothing to do
-					return true
-				}
-			}
+			return true
 		}
 	}
 	return false

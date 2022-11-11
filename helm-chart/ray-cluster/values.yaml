@@ -1,6 +1,11 @@
 # Default values for ray-cluster.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+annotations:
+  # Treat this as a helm hook to force re-creation until bug is fixed:
+  # https://github.com/ray-project/kuberay/issues/558
+  "helm.sh/hook": post-install,post-upgrade
+  "helm.sh/hook-delete-policy": before-hook-creation
 
 image:
   repository: rayproject/ray
@@ -14,6 +19,7 @@ imagePullSecrets: []
   # - name: an-existing-secret
 
 head:
+  enableInTreeAutoscaling: true
   groupName: headgroup
   replicas: 1
   type: head
@@ -50,7 +56,13 @@ head:
     - mountPath: /tmp/ray
       name: log-volume
   sidecarContainers: []
-
+  ports:
+    - containerPort: 8265
+      protocol: TCP
+    - containerPort: 10001
+      protocol: TCP
+    - containerPort: 6379
+      protocol: TCP
 
 worker:
   # If you want to disable the default workergroup

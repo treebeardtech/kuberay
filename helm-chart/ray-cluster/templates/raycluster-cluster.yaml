@@ -14,6 +14,19 @@ spec:
   {{- if .Values.head.enableInTreeAutoscaling }}
   enableInTreeAutoscaling: {{ .Values.head.enableInTreeAutoscaling }}
   {{- end }}
+  # autoscalerOptions is an OPTIONAL field specifying configuration overrides for the Ray autoscaler.
+  # The example configuration shown below below represents the DEFAULT values.
+  autoscalerOptions:
+    # upscalingMode is "Default" or "Aggressive."
+    # Default: Upscaling is rate-limited; the number of pending worker pods is at most the size of the Ray cluster.
+    # Aggressive: Upscaling is not rate-limited.
+    upscalingMode: Default
+    # idleTimeoutSeconds is the number of seconds to wait before scaling down a worker pod which is not using Ray resources.
+    idleTimeoutSeconds: 300
+    # image optionally overrides the autoscaler's container image.
+    image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+    # imagePullPolicy optionally overrides the autoscaler container's image pull policy.
+    imagePullPolicy: {{ .Values.image.pullPolicy }}
   headGroupSpec:
     serviceType: {{ .Values.service.type }}
     rayStartParams:
@@ -117,7 +130,7 @@ spec:
       {{ $key }}: {{ $val | quote }}
     {{- end }}
     replicas: {{ .Values.worker.replicas }}
-    minReplicas: {{ .Values.worker.miniReplicas | default 1 }}
+    minReplicas: {{ .Values.worker.miniReplicas | default 0 }}
     maxReplicas: {{ .Values.worker.maxiReplicas | default 2147483647 }}
     groupName: {{ .Values.worker.groupName }}
     template:

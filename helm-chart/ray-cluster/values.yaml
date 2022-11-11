@@ -21,6 +21,24 @@ imagePullSecrets: []
 head:
   enableInTreeAutoscaling: true
   groupName: headgroup
+  # If enableInTreeAutoscaling is true, the autoscaler sidecar will be added to the Ray head pod.
+  # Ray autoscaler integration is supported only for Ray versions >= 1.11.0
+  # Ray autoscaler integration is Beta with KubeRay >= 0.3.0 and Ray >= 2.0.0.
+  # enableInTreeAutoscaling: true
+  # autoscalerOptions is an OPTIONAL field specifying configuration overrides for the Ray autoscaler.
+  # The example configuration shown below below represents the DEFAULT values.
+  # autoscalerOptions:
+    # upscalingMode: Default
+    # idleTimeoutSeconds: 60
+    # resources specifies optional resource request and limit overrides for the autoscaler container.
+    # For large Ray clusters, we recommend monitoring container resource usage to determine if overriding the defaults is required.
+    # resources:
+    #   limits:
+    #     cpu: "500m"
+    #     memory: "512Mi"
+    #   requests:
+    #     cpu: "500m"
+    #     memory: "512Mi"
   replicas: 1
   type: head
   labels:
@@ -76,6 +94,7 @@ worker:
     node-ip-address: $MY_POD_IP
     redis-password: LetMeInRay
     block: 'true'
+  initContainerImage: 'busybox:1.28'  # Enable users to specify the image for init container. Users can pull the busybox image from their private repositories.
   containerEnv:
     - name: MY_POD_IP
       valueFrom:
@@ -124,14 +143,15 @@ additionalWorkerGroups:
     # Disabled by default
     disabled: true
     replicas: 1
-    miniReplicas: 1
-    maxiReplicas: 3
+    minReplicas: 1
+    maxReplicas: 3
     type: worker
     labels: {}
     initArgs:
       node-ip-address: $MY_POD_IP
       redis-password: LetMeInRay
       block: 'true'
+    initContainerImage: 'busybox:1.28'  # Enable users to specify the image for init container. Users can pull the busybox image from their private repositories.
     containerEnv:
       - name: MY_POD_IP
         valueFrom:

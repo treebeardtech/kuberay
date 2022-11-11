@@ -1,3 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ray-code
+data: 
+  sample_code.py: |
+    import ray
+    from os import environ
+    redis_pass = environ.get("REDIS_PASSWORD") 
+    print("trying to connect to Ray!")
+    ray.init(address="auto", _redis_password=redis_pass)
+    print("now executing some code with Ray!")
+    import time
+    start = time.time()
+    @ray.remote
+    def f():
+      time.sleep(0.01)
+      return ray._private.services.get_node_ip_address()
+    values=set(ray.get([f.remote() for _ in range(1000)]))
+    print("Ray Nodes: ",str(values))
+    file = open("/tmp/ray_nodes.txt","a")
+    file.write("available nodes: %s\n" % str(values))
+    file.close()
+    end = time.time()
+    print("Execution time = ",end - start)
+---
 # The resource requests and limits in this config are too small for production!
 # For examples with more realistic resource configuration, see
 # ray-cluster.complete.large.yaml and
@@ -18,9 +44,6 @@ spec:
     serviceType: ClusterIP
     # the pod replicas in this group typed head (assuming there could be more than 1 in the future)
     replicas: 1
-    # logical group name, for this called head-group, also can be functional
-    # pod type head or worker
-    # rayNodeType: head # Not needed since it is under the headgroup
     # the following params are used to complete the ray start: ray start --head --block --redis-port=6379 ...
     rayStartParams:
       port: '6379'
@@ -37,7 +60,6 @@ spec:
           # custom labels. NOTE: do not define custom labels start with `raycluster.`, they may be used in controller.
           # Refer to https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           rayCluster: raycluster-heterogeneous # will be injected if missing
-          rayNodeType: head # will be injected if missing, must be head or wroker
           groupName: headgroup # will be injected if missing
         # annotations for pod
         annotations:
@@ -99,7 +121,6 @@ spec:
       metadata:
         labels:
           rayCluster: raycluster-heterogeneous # will be injected if missing
-          rayNodeType: worker # will be injected if missing
           groupName: small-group # will be injected if missing
         # annotations for pod
         annotations:
@@ -174,7 +195,6 @@ spec:
       metadata:
         labels:
           rayCluster: raycluster-heterogeneous # will be injected if missing
-          rayNodeType: worker # will be injected if missing
         # annotations for pod
         annotations:
           key: value

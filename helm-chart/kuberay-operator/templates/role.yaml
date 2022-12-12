@@ -1,5 +1,5 @@
 {{- if .Values.rbacEnable }}
-kind: ClusterRole
+kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   labels:
@@ -19,6 +19,18 @@ rules:
   - ""
   resources:
   - events
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
   verbs:
   - create
   - delete
